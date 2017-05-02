@@ -1,0 +1,1 @@
+sensu ALL=(ALL) NOPASSWD: /opt/sensu/embedded/bin/check-puppet-last-run.rb -s /var/lib/puppet/state/last_run_summary.yaml

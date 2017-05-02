@@ -1,0 +1,502 @@
+local_users:
+    www-admin:
+        state: present
+        groups:
+            - 'nogroup'
+        uid: 5001
+        gid: 'nogroup'
+        comment: 'Web Admin User'
+        managehome: true
+        home: '/home/www-admin'
+        password: '!'
+
+nginx::config::vhost_purge: true
+nginx::config::confd_purge: true
+nginx::config::client_max_body_size: 15M
+nginx::config::spdy: 'on'
+nginx::config::worker_processes: 'auto'
+
+nginx::nginx_upstreams:
+    'php5-fpm-www_cc_com':
+        ensure: present
+        members:
+            - 'unix:/var/run/php5-fpm-www_cc_com.sock'
+    'php5-fpm-www_hj_com':
+        ensure: present
+        members:
+            - 'unix:/var/run/php5-fpm-www_hj_com.sock'
+    'php5-fpm-www_cmpc_com':
+        ensure: present
+        members:
+            - 'unix:/var/run/php5-fpm-www_cmpc_com.sock'
+    'php5-fpm-www_bwcc_com':
+        ensure: present
+        members:
+            - 'unix:/var/run/php5-fpm-www_bwcc_com.sock'
+
+sensu::checks:
+    'php-fpm_www_cc_com':
+        command: '/opt/sensu/embedded/bin/check-php-fpm.rb -h localhost -p 443 -P ?pool=www_cc_com -l -k'
+    'php-fpm_www_hj_com':
+        command: '/opt/sensu/embedded/bin/check-php-fpm.rb -h localhost -p 443 -P ?pool=www_hj_com -l -k'
+    'php-fpm_www_cmpc_com':
+        command: '/opt/sensu/embedded/bin/check-php-fpm.rb -h localhost -p 443 -P ?pool=www_cmpc_com -l -k'
+    'wordpress-plugins-heatherjowett.com':
+        command: 'wp --path=/srv/heatherjowett/wordpress plugin list | awk ''BEGIN {err=0} /available/ {err=1; printf "%-40s %-10s %-20s\n",$1,$3,$4} END {exit err}'''
+    'wordpress-plugins-cryptkcoding.com':
+        command: 'wp --path=/srv/cryptkcoding/wordpress plugin list | awk ''BEGIN {err=0} /available/ {err=1; printf "%-40s %-10s %-20s\n",$1,$3,$4} END {exit err}'''
+    'wordpress-plugins-clarkmotionpictureco.com':
+        command: 'wp --path=/srv/clarkmotionpictureco/wordpress plugin list | awk ''BEGIN {err=0} /available/ {err=1; printf "%-40s %-10s %-20s\n",$1,$3,$4} END {exit err}'''
+    'wordpress-core-heatherjowett.com':
+        command: 'wp --path=/srv/heatherjowett/wordpress/ core check-update | awk ''BEGIN {err=1} /^Success/ {err=0} END {print; exit err}'''
+    'wordpress-core-cryptkcoding.com':
+        command: 'wp --path=/srv/cryptkcoding/wordpress/ core check-update | awk ''BEGIN {err=1} /^Success/ {err=0} END {print; exit err}'''
+    'wordpress-core-clarkmotionpictureco.com':
+        command: 'wp --path=/srv/clarkmotionpictureco/wordpress/ core check-update | awk ''BEGIN {err=1} /^Success/ {err=0} END {print; exit err}'''
+    'https_cryptkcoding.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u https://cryptkcoding.com'
+    'https_webmail.cryptkcoding.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u https://webmail.cryptkcoding.com'
+    'http_heatherjowett.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u http://heatherjowett.com'
+    'http_clarkmotionpictureco.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u http://clarkmotionpictureco.com'
+    'https-cert_cryptkcoding.com':
+        command: '/opt/sensu/embedded/bin/check-https-cert.rb -u https://cryptkcoding.com -c 15 -w 30'
+    'domain-expiration':
+        command: '/opt/sensu/embedded/bin/check-whois-domain-expiration-multi.rb -d cryptkcoding.com,heatherjowett.com,clarkmotionpictureco.com -w 30 -c 14'
+    'puppet-lastrun':
+        command: '/opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000 -s /var/lib/puppet/state/last_run_summary.yaml'
+    'ntp-status':
+        command: '/opt/sensu/embedded/bin/check-ntp.rb -w 50'
+
+nginx::nginx_servers:
+    'cryptkcoding.com':
+        ensure: present
+        ssl_redirect: true
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/cryptkcoding/wordpress'
+        include_files: ['global/common.conf']
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        index_files: ['index.php']
+        use_default_location: false
+
+    'ken.cryptkcoding.com':
+        ensure: present
+        ssl_redirect: true
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/cryptkcoding/ken'
+        include_files: ['global/common.conf']
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        index_files: ['index.php']
+        use_default_location: false
+
+    'impress.cryptkcoding.com':
+        ensure: present
+        ssl_redirect: true
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/cryptkcoding/impress'
+        include_files: ['global/common.conf']
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        index_files: ['index.html', 'index.php']
+        autoindex: 'on'
+        use_default_location: true
+
+    'admin.cryptkcoding.com':
+        ensure: present
+        ssl_redirect: true
+        rewrite_www_to_non_www: false
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/cryptkcoding/admin'
+        include_files: ['global/common.conf']
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        index_files: ['index.php']
+        use_default_location: false
+        raw_prepend: "set $pool \"www-data\";\n  if ($arg_pool) {\n    set $pool $arg_pool;\n  }"
+
+    'webmail.cryptkcoding.com':
+        ensure: present
+        ssl_redirect: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/cryptkcoding/webmail'
+        include_files: ['global/common.conf']
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        index_files: ['index.html', 'index.php']
+        use_default_location: false
+
+    'minecraft.cryptkcoding.com':
+        ensure: present
+        ssl_redirect: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/cryptkcoding/minecraft'
+        include_files: ['global/common.conf']
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        index_files: ['index.php', 'index.html']
+        use_default_location: false
+        auth_basic: "Multicraft Control Panel"
+        auth_basic_user_file: "/etc/nginx/global/minecraft.htpasswd"
+
+    'bluewatercustomcreations.com':
+        ensure: present
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/bluewatercustomcreations/wordpress'
+        include_files: ['global/common.conf']
+        index_files: ['index.php']
+        use_default_location: false
+
+    'clarkmotionpictureco.com':
+        ensure: present
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/clarkmotionpictureco/wordpress'
+        include_files: ['global/common.conf']
+        index_files: ['index.php']
+        use_default_location: false
+
+    'heatherjowett.com':
+        ensure: present
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/heatherjowett/wordpress'
+        include_files: ['global/common.conf']
+        index_files: ['index.php', 'index.html']
+        use_default_location: false
+        access_log: '/srv/heatherjowett/logs/heatherjowett.com.access.nginx.log'
+        error_log: '/srv/heatherjowett/logs/heatherjowett.com.error.nginx.log'
+
+    # Setting to absent per Heather
+    'heatherjeveryday.com':
+        ensure: absent
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        www_root: '/srv/heatherjeveryday/wordpress'
+        include_files: ['global/common.conf']
+        index_files: ['index.php', 'index.html']
+        use_default_location: false
+
+nginx::nginx_locations:
+    'cryptkcoding.com_root':
+        ensure: present
+        location: '/'
+        ssl: true
+        ssl_only: true
+        server: 'cryptkcoding.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'cryptkcoding.com_php':
+        ensure: present
+        location: '~ \.php$'
+        ssl: true
+        ssl_only: true
+        server: 'cryptkcoding.com'
+        fastcgi: 'php5-fpm-www_cc_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'cryptkcoding.com_static':
+        ensure: present
+        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+        ssl: true
+        ssl_only: true
+        server: 'cryptkcoding.com'
+        location_custom_cfg:
+            'expires': 'max'
+            'log_not_found': 'off'
+
+    'ken.cryptkcoding.com_root':
+        ensure: present
+        location: '/'
+        ssl: true
+        ssl_only: true
+        server: 'ken.cryptkcoding.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'ken.cryptkcoding.com_php':
+        ensure: present
+        location: '~ \.php$'
+        ssl: true
+        ssl_only: true
+        server: 'ken.cryptkcoding.com'
+        fastcgi: 'php5-fpm-www_cc_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'ken.cryptkcoding.com_static':
+        ensure: present
+        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+        ssl: true
+        ssl_only: true
+        server: 'ken.cryptkcoding.com'
+        location_custom_cfg:
+            'expires': 'max'
+            'log_not_found': 'off'
+
+    'admin.cryptkcoding.com_php-fpm':
+        ensure: present
+        location: '~ "/fpm-(status|ping)"'
+        ssl: true
+        ssl_only: true
+        fastcgi: 'unix:/var/run/php5-fpm-$pool.sock'
+        server: 'admin.cryptkcoding.com'
+        location_allow:
+            - '127.0.0.1'
+        location_deny:
+            - 'all'
+        location_custom_cfg:
+            'access_log': 'off'
+
+    'webmail.cryptkcoding.com_root':
+        ensure: present
+        location: '/'
+        ssl: true
+        ssl_only: true
+        server: 'webmail.cryptkcoding.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'webmail.cryptkcoding.com_php':
+        ensure: present
+        location: '~ \.php$'
+        ssl: true
+        ssl_only: true
+        server: 'webmail.cryptkcoding.com'
+        fastcgi: 'php5-fpm-www_cc_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'webmail.cryptkcoding.com_static':
+        ensure: present
+        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+        ssl: true
+        ssl_only: true
+        server: 'webmail.cryptkcoding.com'
+        location_custom_cfg:
+            'expires': 'max'
+            'log_not_found': 'off'
+
+    'minecraft.cryptkcoding.com_root':
+        ensure: present
+        location: '/'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'minecraft.cryptkcoding.com_protected':
+        ensure: present
+        priority: 401
+        location: '~ ^/protected'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        location_custom_cfg:
+            'deny': 'all'
+    'minecraft.cryptkcoding.com_php':
+        ensure: present
+        priority: 510
+        location: '~ \.php$'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        fastcgi: 'php5-fpm-www_cc_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'minecraft.cryptkcoding.com_map':
+        ensure: present
+        priority: 503
+        location: '~ ^/map'
+        www_root: '/srv/cryptkcoding/minecraft'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        auth_basic: 'off'
+    'minecraft.cryptkcoding.com_arrakis':
+        ensure: present
+        priority: 503
+        location: '~ ^/arrakis'
+        www_root: '/srv/cryptkcoding/minecraft'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        auth_basic: 'off'
+    'minecraft.cryptkcoding.com_map_php':
+        ensure: present
+        priority: 502
+        location: '~ /map/.*\.php$'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        fastcgi: 'php5-fpm-www_cc_com'
+        auth_basic: 'off'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'minecraft.cryptkcoding.com_jars':
+        ensure: present
+        priority: 504
+        location: '~ ^/jars'
+        www_root: '/srv/cryptkcoding/minecraft'
+        ssl: true
+        ssl_only: true
+        server: 'minecraft.cryptkcoding.com'
+        auth_basic: 'off'
+
+    'bluewatercustomcreations.com_root':
+        ensure: present
+        location: '/'
+        server: 'bluewatercustomcreations.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'bluewatercustomcreations.com_php':
+        ensure: present
+        location: '~ \.php$'
+        server: 'bluewatercustomcreations.com'
+        fastcgi: 'php5-fpm-www_bwcc_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'bluewatercustomcreations.com_static':
+        ensure: present
+        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+        server: 'bluewatercustomcreations.com'
+        location_custom_cfg:
+            'expires': 'max'
+            'log_not_found': 'off'
+
+    'clarkmotionpictureco.com_root':
+        ensure: present
+        location: '/'
+        server: 'clarkmotionpictureco.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'clarkmotionpictureco.com_php':
+        ensure: present
+        location: '~ \.php$'
+        server: 'clarkmotionpictureco.com'
+        fastcgi: 'php5-fpm-www_cmpc_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'clarkmotionpictureco.com_static':
+        ensure: present
+        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+        server: 'clarkmotionpictureco.com'
+        location_custom_cfg:
+            'expires': 'max'
+            'log_not_found': 'off'
+
+    'heatherjowett.com_root':
+        ensure: present
+        location: '/'
+        server: 'heatherjowett.com'
+        location_custom_cfg:
+            'try_files': '$uri $uri/ /index.php?$args'
+    'heatherjowett.com_php':
+        ensure: present
+        location: '~ \.php$'
+        server: 'heatherjowett.com'
+        fastcgi: 'php5-fpm-www_hj_com'
+        location_cfg_prepend:
+            'fastcgi_intercept_errors': 'on'
+    'heatherjowett.com_readme':
+        ensure: present
+        location: '~ readme.txt$'
+        server: 'heatherjowett.com'
+        location_custom_cfg:
+            'try_files': '$uri @rewritereadme'
+    'heatherjowett.com_rewritereadme':
+        ensure: present
+        location: '@rewritereadme'
+        server: 'heatherjowett.com'
+        location_custom_cfg:
+            'rewrite': '^(.*)/readme.txt $1/change_log.txt'
+    'heatherjowett.com_static':
+        ensure: present
+        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+        server: 'heatherjowett.com'
+        location_custom_cfg:
+            'expires': 'max'
+            'log_not_found': 'off'
+
+# Disabling per Heather
+#    'heatherjeveryday.com_root':
+#        ensure: present
+#        location: '/'
+#        vhost: 'heatherjeveryday.com'
+#        location_custom_cfg:
+#            'try_files': '$uri $uri/ /index.php?$args'
+#    'heatherjeveryday.com_php':
+#        ensure: present
+#        location: '~ \.php$'
+#        vhost: 'heatherjeveryday.com'
+#        fastcgi: 'php5-fpm-www_hj_com'
+#        location_cfg_prepend:
+#            'fastcgi_intercept_errors': 'on'
+#    'heatherjeveryday.com_static':
+#        ensure: present
+#        location: '~* \.(js|css|png|jpg|jpeg|gif|ico)$'
+#        vhost: 'heatherjeveryday.com'
+#        location_custom_cfg:
+#            'expires': 'max'
+#            'log_not_found': 'off'

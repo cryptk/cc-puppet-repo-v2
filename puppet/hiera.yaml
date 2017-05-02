@@ -1,0 +1,24 @@
+# managed by puppet
+---
+version: 5
+defaults:
+  datadir: /etc/puppetlabs/code/hieradata
+  data_hash: yaml_data
+
+hierarchy:
+  - name: "Per-node encrypted data"
+    lookup_key: eyaml_lookup_key
+    path: "node/%{::fqdn}.eyaml"
+    options:
+        pkcs7_private_key: /etc/hiera/keys/private_key.pkcs7.pem
+        pkcs7_public_key: /etc/hiera/keys/public_key.pkcs7.pem
+  - name: "Global encrypted data"
+    lookup_key: eyaml_lookup_key
+    path: "secure.eyaml"
+    options:
+        pkcs7_private_key: /etc/hiera/keys/private_key.pkcs7.pem
+        pkcs7_public_key: /etc/hiera/keys/public_key.pkcs7.pem
+  - name: "Per-node data"
+    path: "node/%{::fqdn}.yaml"
+  - name: "Global settings"
+    path: "common.yaml"

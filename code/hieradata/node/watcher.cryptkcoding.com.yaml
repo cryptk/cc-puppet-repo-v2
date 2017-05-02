@@ -1,0 +1,54 @@
+sensu::server: true
+sensu::api: true
+sensu::api_bind: 0.0.0.0
+
+uchiwa::host: 127.0.0.1
+uchiwa::user: 'cryptk'
+
+sensu::checks:
+    'https_cryptkcoding.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u https://cryptkcoding.com'
+    'https_webmail.cryptkcoding.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u https://webmail.cryptkcoding.com'
+    'http_heatherjowett.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u http://heatherjowett.com'
+    'http_clarkmotionpictureco.com':
+        command: '/opt/sensu/embedded/bin/check-http.rb -u http://clarkmotionpictureco.com'
+#    'http_heatherjeveryday.com':
+#        command: '/opt/sensu/embedded/bin/check-http.rb -u http://heatherjeveryday.com'
+    'https-cert_cryptkcoding.com':
+        command: '/opt/sensu/embedded/bin/check-https-cert.rb -u https://cryptkcoding.com -c 15 -w 30'
+    'puppet-lastrun':
+        command: '/opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000 -s /var/lib/puppet/state/last_run_summary.yaml'
+    'ntp-status':
+        command: '/opt/sensu/embedded/bin/check-ntp.rb -w 50'
+
+nginx::config::vhost_purge: true
+nginx::config::confd_purge: true
+nginx::config::spdy: 'on'
+nginx::config::worker_processes: 'auto'
+
+nginx::nginx_upstreams:
+    'uchiwa':
+        ensure: present
+        members:
+            - localhost:3000
+
+nginx::nginx_vhosts:
+    'watcher.cryptkcoding.com':
+        ensure: present
+        rewrite_to_https: true
+        rewrite_www_to_non_www: true
+        ipv6_enable: true
+        ipv6_listen_options: ''
+        ssl: true
+        ssl_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.bundle.crt'
+        ssl_key: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.key'
+        ssl_dhparam: '/etc/ssl/wc.cryptkcoding.com/dhparam.pem'
+        ssl_stapling: true
+        ssl_stapling_verify: true
+        ssl_trusted_cert: '/etc/ssl/wc.cryptkcoding.com/wc.cryptkcoding.com.ca.crt'
+        ssl_protocols: 'TLSv1.1 TLSv1.2'
+        add_header: 
+            'Strict-Transport-Security': '"max-age=31536000; includeSubdomains"'
+        proxy: 'http://uchiwa'

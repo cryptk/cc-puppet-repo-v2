@@ -1,0 +1,17 @@
+{
+  "CHANGELOG.md": "8ea122f3290da3291e4c5bd3f2d622f8",
+  "Gemfile": "38b7d8430964b4269cbed281105ba41e",
+  "Gemfile.lock": "8523cc392296b80ed5075c3177d896fa",
+  "README.md": "64a822b3254f2556db5603386da3a793",
+  "Rakefile": "63e4452669166c8c5264585bf4938006",
+  "manifests/init.pp": "045c8aca46dfe5c4337220907bf2e1ff",
+  "manifests/ssh_authorized_keys.pp": "5091cbd7a9b7271d137ce97e160323a0",
+  "manifests/windows.pp": "cd6520249d0195bca68f49d00e2ac54e",
+  "metadata.json": "ac349abdb81dacd12bd6e7ed1c77051d",
+  "spec/classes/coverage_spec.rb": "5b6dfa0dd426aca0ccfae23c0a629f0b",
+  "spec/defines/init_spec.rb": "fda6880998db37fd933d44055d03ba98",
+  "spec/defines/ssh_authorized_keys_spec.rb": "f3b73aebb77b63c8c96fd2db8b617679",
+  "spec/defines/windows_spec.rb": "bbb221c5adbc8cf97a852729c5802ce9",
+  "spec/spec_helper.rb": "b0f4c27ca7d27efdac7acc179a53ce2b",
+  "tests/init.pp": "dea69896b83a689a53cecb524a78722c"
+}

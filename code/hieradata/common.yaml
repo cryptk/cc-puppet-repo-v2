@@ -1,0 +1,63 @@
+apt::update:
+    frequency: 'daily'
+
+rackspace::username: 'cryptkcoding'
+
+holland::backups_to_keep: 3
+
+local_users:
+    cryptk:
+        state: present
+        groups:
+            - 'sudo'
+        uid: 1001
+        gid: 'cryptk'
+        comment: 'Chris Jowett'
+        managehome: true
+        home: '/home/cryptk'
+        shell: '/bin/bash'
+        password: '$6$J477s3Cn$0emyFIThidBzodgwxzW2NPJJzQCbCqoSB.t7cmQIgDA1pXOyuA8H4PeUWjdXkYlRIa98k9Z3Au/IN6aYYMFFJ0'
+        password_max_age: 99999
+        ssh_authorized_keys:
+            - 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA4czIpNsBK8VCLTLO2Sjyzk2+BL8xaaMhjXkm/KSd/6XCZN64UrQmb+ccMd7IUVdNvU1zNXvUai93lIF8tilWRXmtxjTV8cOxmAnunBH2Jt3yjIVt7Sk1XJLfRYaWJs5j2ReLQRUd+nu6TbSds3CyAhLSOhibhBSZI2ZpXI/hwIjUdht7332SYWAHtphoBtw22BbEXgAaXRehdsI7lpk2EJC2OU6G/r9rwz8qT9iROVnHQ4zQKNr3t55GgKjqsWxDeAC9LR1ylnFdZ5FHlag/s9b+q15Cu6mGsMvcS0nm7JqFUzwP5MptkjCHp9z3anzXLjYzEDbJo47RDAFEzOyztw== cryptk@cryptk-desktop'
+            - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3ETx/97aOO88R8TkGIXFYVsaMVfKP8AKGkovm6QKLfJCn9/231dnj8QE327+K7wWDjK2DjnwaJYUIY/RPtUDAexrRoIECBdUr0fHiCDUiS6NY/meSJCwOQ8uumi7E1i1MQf4Uh8B71aOirU2o0e/O8YEHBoKdXzFGSa5zqHZ95q9ArpK/39Cv1/56vdKnI6UQfnRSQ/Vuks/Dti5UZVO+nB4DqIKcxjNlRtyndjXelwE9FItzBd6/2WYbLlLqYTyof1Zwndz/9VCJJUL9OXzDklPYYvEo61ZUCk+Qk7CLADislWPPFDsf1mfr5oWN+ebc5dt1F0Zy7Icnlhgdh1X9 cryptk@work-laptop'
+
+ssl_certs:
+    - 'wc_cryptkcoding_com'
+
+sensu::install_repo: true
+sensu::repo_source: 'http://sensu.global.ssl.fastly.net/apt'
+sensu::repo_key_source: 'https://sensu.global.ssl.fastly.net/apt/pubkey.gpg'
+uchiwa::repo_source: "%{hiera('sensu::repo_source')}"
+sensu::purge: true
+sensu::rabbitmq_host: watcher.int.cryptkcoding.com
+sensu::rabbitmq_port: 5672
+sensu::safe_mode: true
+sensu::use_embedded_ruby: true
+sensu::redact:
+  - 'password'
+  - 'username'
+sensu::client_custom:
+    mysql:
+        password: "%{hiera('mysql::user::root::password')}"
+sensu::subscriptions:
+    - 'all'
+    - "%{::fqdn}"
+sensu::checks:
+  'puppet-lastrun':
+    command: 'sudo /opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000 -s /var/lib/puppet/state/last_run_summary.yaml'
+  'ntp-status':
+    command: '/opt/sensu/embedded/bin/check-ntp.rb -w 50'
+
+ntp::servers:
+    - '0.ubuntu.pool.ntp.org'
+    - '1.ubuntu.pool.ntp.org'
+    - '2.ubuntu.pool.ntp.org'
+    - '3.ubuntu.pool.ntp.org'
+    - 'ntp.ubuntu.com'
+ntp::restrict:
+    - '-4 default kod notrap nomodify nopeer noquery'
+    - '-6 default kod notrap nomodify nopeer noquery'
+    - '127.0.0.1'
+    - '::1'
+ntp::driftfile: '/var/lib/ntp/ntp.drift'
