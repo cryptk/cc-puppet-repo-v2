@@ -45,7 +45,7 @@ sensu::subscriptions:
     - "%{::fqdn}"
 sensu::checks:
   'puppet-lastrun':
-    command: 'sudo /opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000 -s /var/lib/puppet/state/last_run_summary.yaml'
+    command: 'sudo /opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000'
   'ntp-status':
     command: '/opt/sensu/embedded/bin/check-ntp.rb -w 50'
 

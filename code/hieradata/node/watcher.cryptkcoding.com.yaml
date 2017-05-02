@@ -19,7 +19,7 @@ sensu::checks:
     'https-cert_cryptkcoding.com':
         command: '/opt/sensu/embedded/bin/check-https-cert.rb -u https://cryptkcoding.com -c 15 -w 30'
     'puppet-lastrun':
-        command: '/opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000 -s /var/lib/puppet/state/last_run_summary.yaml'
+        command: '/opt/sensu/embedded/bin/check-puppet-last-run.rb -w 2100 -c 3000'
     'ntp-status':
         command: '/opt/sensu/embedded/bin/check-ntp.rb -w 50'
 
