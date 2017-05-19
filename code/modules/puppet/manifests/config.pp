@@ -31,4 +31,18 @@ class puppet::config {
 #        mode   => '0644',
 #    }
 
+    logrotate::rule {'puppet_apply':
+        path          => '/var/log/puppetlabs/puppet/puppet.log',
+        rotate        => 12,
+        rotate_every  => 'week',
+        missingok     => true,
+        ifempty       => false,
+        compress      => true,
+        delaycompress => true,
+        create        => true,
+        create_mode   => '0644',
+        create_owner  => 'root',
+        create_group  => 'root',
+    }
+
 }
