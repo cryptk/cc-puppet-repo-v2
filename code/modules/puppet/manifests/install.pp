@@ -14,7 +14,7 @@ class puppet::install {
     package {'puppet-agent':
         ensure  => latest,
         require => [
-            Apt::Source['puppetlabs'],
+            Apt::Source['puppetlabs-pc1'],
             Class['apt::update'],
         ]
     }
