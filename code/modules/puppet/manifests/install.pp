@@ -2,7 +2,7 @@ class puppet::install {
 
     include apt
 
-    apt::source {'puppetlabs':
+    apt::source {'puppetlabs-pc1':
         location => 'http://apt.puppetlabs.com',
         repos    => 'PC1',
         key      => {
